@@ -15,10 +15,7 @@ connectDB();
 
 // Middleware
 app.use(helmet());
-app.use(cors({
-    origins: [process.env.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:3001'],
-    credentials: true
-}));
+app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -72,4 +69,5 @@ app.listen(PORT, () => {
     console.log(`📊 Dashboard API: http://localhost:${PORT}/api/orders`);
     console.log(`❤️ Health check: http://localhost:${PORT}/health`);
     console.log(`🏠 API Root: http://localhost:${PORT}/`);
+
 });

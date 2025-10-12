@@ -76,7 +76,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: 'Products array is required and cannot be empty' });
         }
 
-        const requiredCustomerFields = ['fullName', 'phone', 'email', 'city', 'address'];
+        const requiredCustomerFields = ['fullName', 'phone',  'city', 'address'];
         const missingFields = requiredCustomerFields.filter(field => !req.body.customer[field]);
 
         if (missingFields.length > 0) {
@@ -375,5 +375,6 @@ router.patch('/bulk/status', async (req, res) => {
         res.status(500).json({ message: 'Error updating orders', error: error.message });
     }
 });
+
 
 module.exports = router;

@@ -1,4 +1,5 @@
 // backend/routes/orders.js
+
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
@@ -22,7 +23,6 @@ router.get('/', async (req, res) => {
 
         if (status) filter.status = status;
         if (city) filter['customer.city'] = new RegExp(city, 'i');
-
         if (startDate || endDate) {
             filter.orderDate = {};
             if (startDate) filter.orderDate.$gte = new Date(startDate);
@@ -63,11 +63,10 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create new order (not modified)
+// Create new order
 router.post('/', async (req, res) => {
     try {
         console.log('📦 Received order data:', JSON.stringify(req.body, null, 2));
-
         if (!req.body.customer) {
             return res.status(400).json({ message: 'Customer information is required' });
         }
@@ -76,9 +75,8 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: 'Products array is required and cannot be empty' });
         }
 
-        const requiredCustomerFields = ['fullName', 'phone',  'city', 'address'];
+        const requiredCustomerFields = ['fullName', 'phone', 'city', 'address'];
         const missingFields = requiredCustomerFields.filter(field => !req.body.customer[field]);
-
         if (missingFields.length > 0) {
             return res.status(400).json({
                 message: `Missing required customer fields: ${missingFields.join(', ')}`
@@ -122,7 +120,8 @@ router.post('/', async (req, res) => {
                 city: req.body.customer.city,
                 address: req.body.customer.address,
                 estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-            }
+            },
+            note: req.body.note || ''
         };
 
         console.log('✅ Processed order data:', JSON.stringify(orderData, null, 2));
@@ -140,10 +139,8 @@ router.post('/', async (req, res) => {
             message: 'Order created successfully',
             order: order
         });
-
     } catch (error) {
         console.error('❌ Error creating order:', error);
-
         if (error.name === 'ValidationError') {
             const validationErrors = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({
@@ -151,13 +148,11 @@ router.post('/', async (req, res) => {
                 errors: validationErrors
             });
         }
-
         if (error.code === 11000) {
             return res.status(400).json({
                 message: 'Order number already exists'
             });
         }
-
         res.status(400).json({
             message: 'Error creating order',
             error: error.message,
@@ -192,11 +187,9 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const order = await Order.findByIdAndDelete(req.params.id);
-
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
-
         res.json({ message: 'Order deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting order', error: error.message });
@@ -214,10 +207,12 @@ router.get('/stats/dashboard', async (req, res) => {
         const deliveredOrders = await Order.countDocuments({ status: 'delivered' });
         const cancelledOrders = await Order.countDocuments({ status: 'cancelled' });
 
+        // Revenue calculation (totalPrice for non-cancelled orders)
         const revenueResult = await Order.aggregate([
             { $match: { status: { $ne: 'cancelled' } } },
             { $group: { _id: null, total: { $sum: '$orderSummary.totalPrice' } } }
         ]);
+
         const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
 
         const revenueByStatus = await Order.aggregate([
@@ -246,10 +241,12 @@ router.get('/stats/dashboard', async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayOrders = await Order.countDocuments({ orderDate: { $gte: today } });
+
         const todayRevenueResult = await Order.aggregate([
             { $match: { orderDate: { $gte: today }, status: { $ne: 'cancelled' } } },
             { $group: { _id: null, total: { $sum: '$orderSummary.totalPrice' } } }
         ]);
+
         const todayRevenue = todayRevenueResult.length > 0 ? todayRevenueResult[0].total : 0;
 
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -266,7 +263,6 @@ router.get('/stats/dashboard', async (req, res) => {
         ]);
 
         const totalCustomers = await Order.distinct('customer.email').length;
-
         const customerOrders = await Order.aggregate([
             { $group: { _id: '$customer.email', orderCount: { $sum: 1 } } }
         ]);
@@ -336,13 +332,10 @@ router.get('/stats/dashboard', async (req, res) => {
 router.post('/:id/resend-email', async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
-
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
-
         const emailSent = await emailService.sendOrderConfirmation(order);
-
         if (emailSent) {
             res.json({ message: 'Order confirmation email sent successfully' });
         } else {
@@ -357,16 +350,13 @@ router.post('/:id/resend-email', async (req, res) => {
 router.patch('/bulk/status', async (req, res) => {
     try {
         const { orderIds, status } = req.body;
-
         if (!orderIds || !status) {
             return res.status(400).json({ message: 'Order IDs and status are required' });
         }
-
         const result = await Order.updateMany(
             { _id: { $in: orderIds } },
             { $set: { status: status } }
         );
-
         res.json({
             message: `Updated ${result.modifiedCount} orders to status: ${status}`,
             modifiedCount: result.modifiedCount
@@ -376,5 +366,5 @@ router.patch('/bulk/status', async (req, res) => {
     }
 });
 
-
 module.exports = router;
+

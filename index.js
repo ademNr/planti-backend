@@ -51,8 +51,6 @@ app.get('/', (req, res) => {
     });
 });
 
-
-
 // Error handling middleware
 app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
@@ -63,11 +61,10 @@ app.use((error, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
     console.log(`🚀 Planti Backend Server running on port ${PORT}`);
     console.log(`📊 Dashboard API: http://localhost:${PORT}/api/orders`);
     console.log(`❤️ Health check: http://localhost:${PORT}/health`);
     console.log(`🏠 API Root: http://localhost:${PORT}/`);
-
 });
+

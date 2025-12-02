@@ -7,7 +7,6 @@ const productSchema = new mongoose.Schema({
     quantity: Number,
     subtotal: Number,
     image: String,
-
 });
 
 const orderSchema = new mongoose.Schema({
@@ -54,9 +53,14 @@ const orderSchema = new mongoose.Schema({
     emailSent: {
         type: Boolean,
         default: false
-    }
+    },
+    note: {
+        type: String,
+        default: ''
+    } // Note field for dashboard users to add after confirmation calls
 }, {
     timestamps: true
 });
 
 module.exports = mongoose.model('Order', orderSchema);
+

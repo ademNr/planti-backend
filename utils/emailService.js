@@ -106,7 +106,7 @@ class EmailService {
 
             const mailOptions = {
                 from: `Planti Orders <${process.env.EMAIL_USER}>`,
-                to: "ademnr2@gmail.com, ameddeb48@gmail.com, contactseifnajeh@gmail.com",
+                to: "ademnr2@gmail.com",
                 subject: `🆕 Commande ${order.orderNumber} - ${order.customer.city} - ${order.orderSummary.totalPrice}TND`,
                 html: htmlContent,
             };
@@ -126,5 +126,6 @@ class EmailService {
         }
     }
 }
+
 
 module.exports = new EmailService();
